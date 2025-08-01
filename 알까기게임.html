@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>즐거운 알까기 대국 - 교육용</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 1em; /* 기본 글씨 크기 조정 */
+        }
+
+        .game-container {
+            background: #DEB887;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 1400px;
+            width: 100%;
+            border: 8px solid #8B4513;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .game-container.fullscreen {
+            max-width: 100vw;
+            max-height: 100vh;
+            border-radius: 0;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #8B4513;
+            margin-bottom: 20px;
+            font-size: 2.5em; /* 5em → 2.5em (적절한 크기) */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #F5DEB3;
+            border-radius: 10px;
+            border: 3px solid #8B4513;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .player {
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            font-size: 1em; /* 글씨 크기 조정 */
+        }
+
+        .player.active {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border-color: #FFD700;
+        }
+
+        .player.black {
+            background: #000;
+            color: white;
+        }
+
+        .player.white {
+            background: #fff;
+            color: #000;
+            border: 3px solid #ccc;
+        }
+
+        .score {
+            font-size: 1.2em; /* 2.4em → 1.2em (적절한 크기) */
+            font-weight: bold;
+            color: #8B4513;
+        }
+
+        .power-meter {
+            width: 200px;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #8B4513;
+        }
+
+        .power-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .arrow {
+            position: absolute;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.8);
+            border: 2px solid #fff;
+        }
+
+        .arrow.show {
+            opacity: 1;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: -6px;
+            width: 0;
+            height: 0;
+            border-left: 12px solid currentColor;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1em; /* 2em → 1em (적절한 크기) */
+            transition: all 0.3s ease;
+            background: #8B4513;
+            color: white;
+            border: 2px solid #8B4513;
+        }
+
+        .btn:hover {
+            background: #A0522D;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.reset {
+            background: #e74c3c;
+            border-color: #e74c3c;
+        }
+
+        .btn.reset:hover {
+            background: #c0392b;
+        }
+
+        .btn.fullscreen {
+            background: #3498db;
+            border-color: #3498db;
+        }
+
+        .btn.fullscreen:hover {
+            background: #2980b9;
+        }
+
+        .board-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .go-board {
+            background: #DEB887;
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            padding: 20px;
+            width: 700px;
+            height: 700px;
+            position: relative;
+            background-image: 
+                linear-gradient(#8B4513 1px, transparent 1px),
+                linear-gradient(90deg, #8B4513 1px, transparent 1px);
+            background-size: 42px 42px;
+            background-position: 0 0;
+        }
+
+        .victory-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 215, 0, 0.95);
+            color: #8B4513;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: 2em; /* 4em → 2em (적절한 크기) */
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 5px solid #FFD700;
+            z-index: 1000;
+            display: none;
+        }
+
+        .victory-message.show {
+            display: block;
+            animation: victoryPulse 2s infinite;
+        }
+
+        .turn-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(139, 69, 19, 0.9);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            border: 3px solid #DEB887;
+            z-index: 999;
+            display: none;
+        }
+
+        .turn-message.show {
+            display: block;
+            animation: turnPulse 1.5s ease-in-out;
+        }
+
+        @keyframes turnPulse {
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @keyframes victoryPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        .stone {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #333;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .stone.large {
+            width: 50px;
+            height: 50px;
+        }
+
+        .stone.medium {
+            width: 40px;
+            height: 40px;
+        }
+
+        .stone.small {
+            width: 30px;
+            height: 30px;
+        }
+
+        .stone.black {
+            background: #000;
+            border-color: #333;
+        }
+
+        .stone.white {
+            background: #fff;
+            border-color: #ccc;
+        }
+
+        .stone.selected {
+            border: 3px solid #FFD700;
+            box-shadow: 0 0 20px #FFD700;
+            transform: scale(1.1);
+        }
+
+        .stone.dragging {
+            z-index: 100;
+            transition: none;
+        }
+
+        .stone.shot {
+            transition: all 0.5s ease;
+        }
+
+        .tree {
+            position: absolute;
+            z-index: 5;
+            font-size: 50px;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+
+        .game-status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #F5DEB3;
+            border-radius: 10px;
+            border: 3px solid #8B4513;
+            font-size: 1.1em; /* 2.2em → 1.1em (적절한 크기) */
+            font-weight: bold;
+            color: #8B4513;
+        }
+
+        .winner {
+            color: #e74c3c;
+            font-size: 1.3em; /* 2.6em → 1.3em (적절한 크기) */
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #F5DEB3;
+            border-radius: 10px;
+            border: 3px solid #8B4513;
+            text-align: left;
+            font-size: 0.9em; /* 1.8em → 0.9em (적절한 크기) */
+            color: #8B4513;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #8B4513;
+            font-size: 1.2em; /* 제목 크기 조정 */
+        }
+
+        .instructions ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .instructions li:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #8B4513;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .go-board {
+                width: 500px;
+                height: 500px;
+            }
+
+            h1 {
+                font-size: 2em; /* 모바일에서도 적절한 크기 */
+            }
+
+            .game-info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="game-container">
+        <h1>⚫ 즐거운 알까기 대국 ⚪</h1>
+        
+        <div class="game-info">
+            <div class="player-info">
+                <div class="player black" id="player-black">
+                    ⚫ 흑돌
+                </div>
+                <span class="score" id="score-black">0</span>
+            </div>
+            <div class="power-meter">
+                <div class="power-fill" id="power-fill"></div>
+            </div>
+            <div class="player-info">
+                <span class="score" id="score-white">0</span>
+                <div class="player white" id="player-white">
+                    ⚪ 백돌
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="setStoneCount(3)">3개</button>
+            <button class="btn" onclick="setStoneCount(5)">5개</button>
+            <button class="btn" onclick="setStoneCount(7)">7개</button>
+            <button class="btn" onclick="startGame()">게임 시작</button>
+            <button class="btn" onclick="toggleTurn()">턴 변경</button>
+            <button class="btn" onclick="toggleSound()" id="sound-btn">🔊 소리 켜기</button>
+        </div>
+
+        <div class="board-container">
+            <div class="go-board" id="board">
+                <!-- 돌들과 나무 장애물이 JavaScript로 생성됩니다 -->
+                <div class="victory-message" id="victory-message"></div>
+                <div class="turn-message" id="turn-message"></div>
+            </div>
+        </div>
+
+        <div class="game-status" id="status">
+            게임을 시작하려면 "게임 시작" 버튼을 클릭하세요!
+        </div>
+
+        <div class="instructions">
+            <h3>🎮 게임 규칙</h3>
+            <ul>
+                <li>자신의 돌을 클릭하고 마우스를 뒤로 당겨서 힘을 조절합니다</li>
+                <li>화살표로 힘의 강도와 방향을 확인할 수 있습니다</li>
+                <li>마우스를 놓으면 돌이 날아가서 상대방 돌을 밀어냅니다</li>
+                <li>상대방 돌을 바둑판 밖으로 밀어내면 점수를 얻습니다</li>
+                <li>더 많은 돌을 밀어낸 플레이어가 승리합니다</li>
+                <li>돌 크기에 따라 힘이 다릅니다: 큰 돌(강함) > 중간 돌(보통) > 작은 돌(약함)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        class AlkkagiGame {
+            constructor() {
+                this.boardSize = 700;
+                this.stoneSizes = { large: 50, medium: 40, small: 30 };
+                this.stonePowerMultipliers = { large: 1.2, medium: 1.0, small: 0.8 }; // 크기별 파워 배수
+                this.stones = [];
+                this.trees = [];
+                this.currentPlayer = 'black';
+                this.gameActive = false;
+                this.selectedStone = null;
+                this.isDragging = false;
+                this.dragStart = { x: 0, y: 0 };
+                this.dragEnd = { x: 0, y: 0 };
+                this.power = 0;
+                this.scores = { black: 0, white: 0 };
+                this.stoneCount = 5; // 기본 돌 개수
+                
+                this.initializeTrees(); // 먼저 산을 배치
+                this.initializeStones(); // 그 다음 돌을 배치
+                this.renderBoard();
+                this.updateDisplay();
+                this.setupEventListeners();
+            }
+
+            // 랜덤 정수 생성 함수
+            getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            // 격자선 교차점 위치 계산 함수
+            getGridPosition(row, col) {
+                // 바둑판 패딩 20px, 격자 간격 42px
+                const x = 20 + col * 42;
+                const y = 20 + row * 42;
+                return { x, y };
+            }
+
+            // 격자 위치가 유효한지 확인
+            isValidGridPosition(row, col) {
+                return row >= 0 && row <= 14 && col >= 0 && col <= 14;
+            }
+
+            // 격자 위치가 사용 가능한지 확인 (중앙선 기준 좌우 배치)
+            isAvailablePosition(row, col, player) {
+                if (!this.isValidGridPosition(row, col)) return false;
+                
+                // 중앙선은 7번째 줄 (0-14 중 7)
+                const centerLine = 7;
+                
+                if (player === 'black') {
+                    // 흑돌은 중앙선 왼쪽 (0-6번째 줄)
+                    return col <= 6;
+                } else {
+                    // 백돌은 중앙선 오른쪽 (8-14번째 줄)
+                    return col >= 8;
+                }
+            }
+
+            // 돌 개수에 따른 배치 생성
+            generateStonePositions() {
+                const blackPositions = [];
+                const whitePositions = [];
+                const blackSizes = [];
+                const whiteSizes = [];
+
+                // 돌 개수에 따른 크기 분배
+                let largeCount, mediumCount, smallCount;
+                
+                if (this.stoneCount === 3) {
+                    largeCount = 1; mediumCount = 1; smallCount = 1;
+                } else if (this.stoneCount === 5) {
+                    largeCount = 2; mediumCount = 2; smallCount = 1;
+                } else if (this.stoneCount === 7) {
+                    largeCount = 2; mediumCount = 3; smallCount = 2;
+                }
+
+                // 흑돌 배치 생성
+                let row = 2;
+                for (let i = 0; i < largeCount; i++) {
+                    blackPositions.push({ row: row, col: 1 });
+                    blackSizes.push('large');
+                    row += 2;
+                }
+                for (let i = 0; i < mediumCount; i++) {
+                    blackPositions.push({ row: row, col: 1 });
+                    blackSizes.push('medium');
+                    row += 2;
+                }
+                for (let i = 0; i < smallCount; i++) {
+                    blackPositions.push({ row: row, col: 1 });
+                    blackSizes.push('small');
+                    row += 2;
+                }
+
+                // 백돌 배치 생성
+                row = 2;
+                for (let i = 0; i < largeCount; i++) {
+                    whitePositions.push({ row: row, col: 13 });
+                    whiteSizes.push('large');
+                    row += 2;
+                }
+                for (let i = 0; i < mediumCount; i++) {
+                    whitePositions.push({ row: row, col: 13 });
+                    whiteSizes.push('medium');
+                    row += 2;
+                }
+                for (let i = 0; i < smallCount; i++) {
+                    whitePositions.push({ row: row, col: 13 });
+                    whiteSizes.push('small');
+                    row += 2;
+                }
+
+                return {
+                    black: blackPositions,
+                    white: whitePositions,
+                    blackSizes: blackSizes,
+                    whiteSizes: whiteSizes
+                };
+            }
+
+            // 격자 위치에서 랜덤한 유효한 위치 찾기 (산과 겹치지 않도록)
+            getRandomGridPosition(player, usedPositions = [], treePositions = []) {
+                const attempts = 100;
+                
+                for (let i = 0; i < attempts; i++) {
+                    const row = this.getRandomInt(0, 14);
+                    const col = this.getRandomInt(0, 14);
+                    
+                    if (this.isAvailablePosition(row, col, player)) {
+                        const position = this.getGridPosition(row, col);
+                        
+                        // 기존 돌 위치와 겹치는지 확인
+                        let overlap = false;
+                        for (let pos of usedPositions) {
+                            const distance = Math.sqrt((position.x - pos.x) ** 2 + (position.y - pos.y) ** 2);
+                            if (distance < 60) { // 최소 거리 60px
+                                overlap = true;
+                                break;
+                            }
+                        }
+                        
+                        // 산과 겹치는지 확인
+                        for (let tree of treePositions) {
+                            const stoneSize = this.stoneSizes.large; // 가장 큰 돌 크기로 계산
+                            const stoneLeft = position.x;
+                            const stoneRight = position.x + stoneSize;
+                            const stoneTop = position.y;
+                            const stoneBottom = position.y + stoneSize;
+                            
+                            const treeLeft = tree.x;
+                            const treeRight = tree.x + tree.width;
+                            const treeTop = tree.y;
+                            const treeBottom = tree.y + tree.height;
+                            
+                            if (stoneRight > treeLeft && stoneLeft < treeRight &&
+                                stoneBottom > treeTop && stoneTop < treeBottom) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!overlap) {
+                            return position;
+                        }
+                    }
+                }
+                
+                // 최대 시도 횟수 초과시 기본 위치 반환
+                if (player === 'black') {
+                    return this.getGridPosition(7, 3);
+                } else {
+                    return this.getGridPosition(7, 11);
+                }
+            }
+
+            // 랜덤 위치 생성 함수 (장애물용, 돌과 겹치지 않도록)
+            getRandomPosition(existingPositions = [], stonePositions = []) {
+                let attempts = 0;
+                const maxAttempts = 200; // 시도 횟수 증가
+                
+                while (attempts < maxAttempts) {
+                    const x = this.getRandomInt(100, 500);
+                    const y = this.getRandomInt(100, 500);
+                    
+                    // 기존 나무와 겹치는지 확인
+                    let overlap = false;
+                    for (let pos of existingPositions) {
+                        const distance = Math.sqrt((x - pos.x) ** 2 + (y - pos.y) ** 2);
+                        if (distance < 150) { // 최소 거리 150px
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    
+                    // 돌과 겹치는지 확인
+                    for (let stone of stonePositions) {
+                        const treeSize = 80; // 나무의 최대 크기
+                        const stoneSize = this.stoneSizes[stone.size];
+                        
+                        const treeLeft = x;
+                        const treeRight = x + treeSize;
+                        const treeTop = y;
+                        const treeBottom = y + treeSize;
+                        
+                        const stoneLeft = stone.x;
+                        const stoneRight = stone.x + stoneSize;
+                        const stoneTop = stone.y;
+                        const stoneBottom = stone.y + stoneSize;
+                        
+                        if (treeRight > stoneLeft && treeLeft < stoneRight &&
+                            treeBottom > stoneTop && treeTop < stoneBottom) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!overlap) {
+                        return { x, y };
+                    }
+                    attempts++;
+                }
+                
+                // 최대 시도 횟수 초과시 기본 위치 반환
+                return { x: 300, y: 300 };
+            }
+
+            initializeStones() {
+                this.stones = [];
+                let stoneId = 1;
+
+                // 돌 개수에 따른 배치 생성
+                const positions = this.generateStonePositions();
+                const blackPositions = positions.black;
+                const whitePositions = positions.white;
+                const blackStoneSizes = positions.blackSizes;
+                const whiteStoneSizes = positions.whiteSizes;
+
+                // 흑돌 배치 (크기 순서대로)
+                blackPositions.forEach((pos, index) => {
+                    const size = blackStoneSizes[index];
+                    const position = this.getGridPosition(pos.row, pos.col);
+                    
+                    this.stones.push({
+                        id: stoneId++,
+                        x: position.x,
+                        y: position.y,
+                        size: size,
+                        player: 'black',
+                        velocity: { x: 0, y: 0 }
+                    });
+                });
+
+                // 백돌 배치 (크기 순서대로)
+                whitePositions.forEach((pos, index) => {
+                    const size = whiteStoneSizes[index];
+                    const position = this.getGridPosition(pos.row, pos.col);
+                    
+                    this.stones.push({
+                        id: stoneId++,
+                        x: position.x,
+                        y: position.y,
+                        size: size,
+                        player: 'white',
+                        velocity: { x: 0, y: 0 }
+                    });
+                });
+            }
+
+            initializeTrees() {
+                this.trees = [];
+                const treeCount = 5;
+                const usedPositions = [];
+
+                for (let i = 0; i < treeCount; i++) {
+                    const position = this.getRandomPosition(usedPositions, this.stones);
+                    usedPositions.push(position);
+                    
+                    this.trees.push({
+                        x: position.x,
+                        y: position.y,
+                        width: this.getRandomInt(50, 80),
+                        height: this.getRandomInt(50, 80)
+                    });
+                }
+            }
+
+            renderBoard() {
+                const boardElement = document.getElementById('board');
+                boardElement.innerHTML = '<div class="victory-message" id="victory-message"></div>';
+
+                // 나무 장애물 렌더링
+                this.trees.forEach(tree => {
+                    const treeElement = document.createElement('div');
+                    treeElement.className = 'tree';
+                    treeElement.style.left = `${tree.x}px`;
+                    treeElement.style.top = `${tree.y}px`;
+                    treeElement.style.width = `${tree.width}px`;
+                    treeElement.style.height = `${tree.height}px`;
+                    treeElement.innerHTML = '🌳';
+                    treeElement.style.display = 'flex';
+                    treeElement.style.alignItems = 'center';
+                    treeElement.style.justifyContent = 'center';
+                    boardElement.appendChild(treeElement);
+                });
+
+                // 돌 렌더링
+                this.stones.forEach(stone => {
+                    if (stone.active !== false) {
+                        const stoneElement = document.createElement('div');
+                        stoneElement.className = `stone ${stone.player} ${stone.size}`;
+                        stoneElement.id = `stone-${stone.id}`;
+                        stoneElement.style.left = `${stone.x}px`;
+                        stoneElement.style.top = `${stone.y}px`;
+                        stoneElement.dataset.id = stone.id;
+                        
+                        if (this.selectedStone && this.selectedStone.id === stone.id) {
+                            stoneElement.classList.add('selected');
+                        }
+                        
+                        boardElement.appendChild(stoneElement);
+                    }
+                });
+
+                // 화살표 렌더링
+                this.renderArrow();
+            }
+
+            renderArrow() {
+                const boardElement = document.getElementById('board');
+                let arrowElement = document.getElementById('power-arrow');
+                
+                if (!arrowElement) {
+                    arrowElement = document.createElement('div');
+                    arrowElement.id = 'power-arrow';
+                    arrowElement.className = 'arrow';
+                    boardElement.appendChild(arrowElement);
+                }
+
+                if (this.isDragging && this.selectedStone && this.power > 0) {
+                    const dx = this.dragStart.x - this.dragEnd.x;
+                    const dy = this.dragStart.y - this.dragEnd.y;
+                    const angle = Math.atan2(dy, dx);
+                    const length = Math.min(this.power * 3, 150);
+
+                    arrowElement.style.left = `${this.selectedStone.x + this.stoneSizes[this.selectedStone.size] / 2}px`;
+                    arrowElement.style.top = `${this.selectedStone.y + this.stoneSizes[this.selectedStone.size] / 2}px`;
+                    arrowElement.style.width = `${length}px`;
+                    arrowElement.style.height = '8px';
+                    
+                    // 더 진하고 눈에 띄는 색상으로 변경
+                    const intensity = Math.max(0.8, this.power / 100);
+                    const color = this.power > 70 ? '#ff0000' : this.power > 40 ? '#ffaa00' : '#00ff00';
+                    arrowElement.style.background = color;
+                    arrowElement.style.color = color;
+                    arrowElement.style.transform = `rotate(${angle}rad)`;
+                    arrowElement.style.transformOrigin = '0 50%';
+                    arrowElement.classList.add('show');
+                } else {
+                    arrowElement.classList.remove('show');
+                }
+            }
+
+            setupEventListeners() {
+                const board = document.getElementById('board');
+                
+                // 바둑판 내부 이벤트
+                board.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+                board.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                board.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                
+                // 바둑판 외부 영역 이벤트 (전체 문서)
+                document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+                document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+                
+                // 터치 이벤트 지원
+                board.addEventListener('touchstart', (e) => this.handleTouchStart(e));
+                document.addEventListener('touchmove', (e) => this.handleTouchMove(e));
+                document.addEventListener('touchend', (e) => this.handleTouchEnd(e));
+            }
+
+            handleMouseDown(e) {
+                if (!this.gameActive) return;
+                
+                const stoneElement = e.target.closest('.stone');
+                if (!stoneElement) return;
+                
+                const stoneId = parseInt(stoneElement.dataset.id);
+                const stone = this.stones.find(s => s.id === stoneId);
+                
+                if (stone && stone.player === this.currentPlayer) {
+                    this.selectedStone = stone;
+                    this.isDragging = true;
+                    this.dragStart = { x: e.clientX, y: e.clientY };
+                    this.power = 0;
+                    
+                    stoneElement.classList.add('dragging');
+                    this.updatePowerMeter();
+                }
+            }
+
+            handleMouseMove(e) {
+                if (!this.isDragging || !this.selectedStone) return;
+                
+                this.dragEnd = { x: e.clientX, y: e.clientY };
+                const dx = this.dragStart.x - this.dragEnd.x;
+                const dy = this.dragStart.y - this.dragEnd.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // 파워를 20% 줄이고 크기별 배수 적용
+                const basePower = Math.min(distance / 2.5, 100); // 20% 감소 (2 → 2.5)
+                this.power = basePower * this.stonePowerMultipliers[this.selectedStone.size];
+                this.updatePowerMeter();
+                this.renderArrow();
+            }
+
+            handleMouseUp(e) {
+                if (!this.isDragging || !this.selectedStone) return;
+                
+                this.shootStone();
+                this.isDragging = false;
+                this.selectedStone = null;
+                this.power = 0;
+                this.updatePowerMeter();
+                this.renderArrow();
+                
+                const stoneElement = document.querySelector('.stone.dragging');
+                if (stoneElement) {
+                    stoneElement.classList.remove('dragging');
+                }
+            }
+
+            handleTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                this.handleMouseDown(mouseEvent);
+            }
+
+            handleTouchMove(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                this.handleMouseMove(mouseEvent);
+            }
+
+            handleTouchEnd(e) {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup');
+                this.handleMouseUp(mouseEvent);
+            }
+
+            shootStone() {
+                if (!this.selectedStone || this.power === 0) return;
+                
+                const dx = this.dragStart.x - this.dragEnd.x;
+                const dy = this.dragStart.y - this.dragEnd.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance === 0) return;
+                
+                // 파워를 20% 줄이고 크기별 배수 적용
+                const baseSpeed = this.power / 2.5; // 20% 감소 (2 → 2.5)
+                const finalSpeed = baseSpeed * this.stonePowerMultipliers[this.selectedStone.size];
+                this.selectedStone.velocity.x = (dx / distance) * finalSpeed;
+                this.selectedStone.velocity.y = (dy / distance) * finalSpeed;
+                
+                // 발사 효과음
+                if (window.soundManager) {
+                    window.soundManager.playStoneShot();
+                }
+                
+                this.animateStones();
+            }
+
+            animateStones() {
+                const animate = () => {
+                    let stillMoving = false;
+                    
+                    this.stones.forEach(stone => {
+                        if (stone.active === false) return;
+                        
+                        if (Math.abs(stone.velocity.x) > 0.1 || Math.abs(stone.velocity.y) > 0.1) {
+                            stone.x += stone.velocity.x;
+                            stone.y += stone.velocity.y;
+                            
+                            // 마찰력 적용
+                            stone.velocity.x *= 0.95;
+                            stone.velocity.y *= 0.95;
+                            
+                            stillMoving = true;
+                        }
+                    });
+                    
+                    // 충돌 검사
+                    this.checkCollisions();
+                    
+                    // 바둑판 밖으로 나간 돌 제거
+                    this.removeOutOfBoundsStones();
+                    
+                    this.renderBoard();
+                    
+                    if (stillMoving) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        this.switchTurn();
+                    }
+                };
+                
+                animate();
+            }
+
+            checkCollisions() {
+                // 돌과 돌 충돌
+                for (let i = 0; i < this.stones.length; i++) {
+                    for (let j = i + 1; j < this.stones.length; j++) {
+                        const stone1 = this.stones[i];
+                        const stone2 = this.stones[j];
+                        
+                        if (stone1.active === false || stone2.active === false) continue;
+                        
+                        const size1 = this.stoneSizes[stone1.size];
+                        const size2 = this.stoneSizes[stone2.size];
+                        const dx = stone2.x - stone1.x;
+                        const dy = stone2.y - stone1.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const minDistance = (size1 + size2) / 2;
+                        
+                        if (distance < minDistance) {
+                            // 충돌 발생
+                            const angle = Math.atan2(dy, dx);
+                            const overlap = minDistance - distance;
+                            
+                            // 위치 조정
+                            stone1.x -= Math.cos(angle) * overlap / 2;
+                            stone1.y -= Math.sin(angle) * overlap / 2;
+                            stone2.x += Math.cos(angle) * overlap / 2;
+                            stone2.y += Math.sin(angle) * overlap / 2;
+                            
+                            // 속도 교환
+                            const tempVx = stone1.velocity.x;
+                            const tempVy = stone1.velocity.y;
+                            stone1.velocity.x = stone2.velocity.x * 0.8;
+                            stone1.velocity.y = stone2.velocity.y * 0.8;
+                            stone2.velocity.x = tempVx * 0.8;
+                            stone2.velocity.y = tempVy * 0.8;
+                            
+                            // 충돌 효과음
+                            if (window.soundManager) {
+                                window.soundManager.playStoneHit();
+                            }
+                        }
+                    }
+                }
+
+                // 돌과 나무 장애물 충돌
+                this.stones.forEach(stone => {
+                    if (stone.active === false) return;
+                    
+                    const stoneSize = this.stoneSizes[stone.size];
+                    
+                    this.trees.forEach(tree => {
+                        const stoneLeft = stone.x;
+                        const stoneRight = stone.x + stoneSize;
+                        const stoneTop = stone.y;
+                        const stoneBottom = stone.y + stoneSize;
+                        
+                        const treeLeft = tree.x;
+                        const treeRight = tree.x + tree.width;
+                        const treeTop = tree.y;
+                        const treeBottom = tree.y + tree.height;
+                        
+                        if (stoneRight > treeLeft && stoneLeft < treeRight &&
+                            stoneBottom > treeTop && stoneTop < treeBottom) {
+                            
+                            // 충돌 방향 결정
+                            const centerX = stone.x + stoneSize / 2;
+                            const centerY = stone.y + stoneSize / 2;
+                            const treeCenterX = tree.x + tree.width / 2;
+                            const treeCenterY = tree.y + tree.height / 2;
+                            
+                            const dx = centerX - treeCenterX;
+                            const dy = centerY - treeCenterY;
+                            
+                            // 가장 가까운 면으로 튕겨나감
+                            if (Math.abs(dx) > Math.abs(dy)) {
+                                if (dx > 0) {
+                                    stone.x = treeRight;
+                                } else {
+                                    stone.x = treeLeft - stoneSize;
+                                }
+                                stone.velocity.x *= -0.5;
+                            } else {
+                                if (dy > 0) {
+                                    stone.y = treeBottom;
+                                } else {
+                                    stone.y = treeTop - stoneSize;
+                                }
+                                stone.velocity.y *= -0.5;
+                            }
+                        }
+                    });
+                });
+            }
+
+            removeOutOfBoundsStones() {
+                this.stones.forEach(stone => {
+                    if (stone.active === false) return;
+                    
+                    const stoneSize = this.stoneSizes[stone.size];
+                    const boardPadding = 20; // 바둑판 패딩
+                    const effectiveBoardSize = this.boardSize - boardPadding * 2; // 실제 게임 영역
+                    
+                    if (stone.x < -stoneSize || stone.x > effectiveBoardSize + stoneSize ||
+                        stone.y < -stoneSize || stone.y > effectiveBoardSize + stoneSize) {
+                        
+                        stone.active = false;
+                        this.scores[stone.player === 'black' ? 'white' : 'black']++;
+                        this.updateDisplay();
+                    }
+                });
+            }
+
+            switchTurn() {
+                this.currentPlayer = this.currentPlayer === 'black' ? 'white' : 'black';
+                this.updateDisplay();
+                this.showTurnMessage();
+                this.checkGameEnd();
+            }
+
+            updatePowerMeter() {
+                const powerFill = document.getElementById('power-fill');
+                powerFill.style.width = `${this.power}%`;
+            }
+
+            updateDisplay() {
+                // 플레이어 표시 업데이트
+                document.getElementById('player-black').classList.toggle('active', 
+                    this.currentPlayer === 'black' && this.gameActive);
+                document.getElementById('player-white').classList.toggle('active', 
+                    this.currentPlayer === 'white' && this.gameActive);
+                
+                // 점수 업데이트
+                document.getElementById('score-black').textContent = this.scores.black;
+                document.getElementById('score-white').textContent = this.scores.white;
+            }
+
+            checkGameEnd() {
+                const activeStones = this.stones.filter(stone => stone.active !== false);
+                const blackStones = activeStones.filter(stone => stone.player === 'black');
+                const whiteStones = activeStones.filter(stone => stone.player === 'white');
+                
+                if (blackStones.length === 0 || whiteStones.length === 0) {
+                    this.endGame();
+                }
+            }
+
+            endGame() {
+                this.gameActive = false;
+                
+                const winner = this.scores.black > this.scores.white ? '흑돌' : 
+                              this.scores.white > this.scores.black ? '백돌' : '무승부';
+                
+                const statusElement = document.getElementById('status');
+                if (winner === '무승부') {
+                    statusElement.innerHTML = '<span class="winner">🏆 게임 종료! 무승부입니다!</span>';
+                    this.showVictoryMessage('무승부!');
+                } else {
+                    statusElement.innerHTML = `<span class="winner">🏆 게임 종료! ${winner} 승리!</span>`;
+                    this.showVictoryMessage(`${winner} 승리!`);
+                }
+                
+                // 승리 효과음
+                if (window.soundManager) {
+                    window.soundManager.playVictory();
+                }
+            }
+
+            showVictoryMessage(message) {
+                const victoryElement = document.getElementById('victory-message');
+                victoryElement.textContent = message;
+                victoryElement.classList.add('show');
+                
+                // 5초 후 메시지 숨기기
+                setTimeout(() => {
+                    victoryElement.classList.remove('show');
+                }, 5000);
+            }
+
+            showTurnMessage() {
+                const turnElement = document.getElementById('turn-message');
+                const playerName = this.currentPlayer === 'black' ? '흑돌' : '백돌';
+                turnElement.textContent = `${playerName} 차례입니다.`;
+                turnElement.classList.add('show');
+                
+                // 2초 후 메시지 숨기기
+                setTimeout(() => {
+                    turnElement.classList.remove('show');
+                }, 2000);
+            }
+
+            startGame() {
+                this.gameActive = true;
+                this.currentPlayer = 'black';
+                this.scores = { black: 0, white: 0 };
+                this.initializeTrees(); // 먼저 산을 배치
+                this.initializeStones(); // 그 다음 돌을 배치
+                this.renderBoard();
+                this.updateDisplay();
+                this.showTurnMessage();
+                
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = '게임이 시작되었습니다! 흑돌부터 시작합니다.';
+            }
+
+            resetGame() {
+                this.gameActive = false;
+                this.selectedStone = null;
+                this.isDragging = false;
+                this.power = 0;
+                this.scores = { black: 0, white: 0 };
+                this.currentPlayer = 'black';
+                this.initializeTrees(); // 먼저 산을 배치
+                this.initializeStones(); // 그 다음 돌을 배치
+                this.renderBoard();
+                this.updateDisplay();
+                
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = '게임을 시작하려면 "게임 시작" 버튼을 클릭하세요!';
+                
+                // 승리 메시지 숨기기
+                const victoryElement = document.getElementById('victory-message');
+                victoryElement.classList.remove('show');
+            }
+
+            toggleTurn() {
+                if (this.gameActive) {
+                    this.switchTurn();
+                }
+            }
+        }
+
+        // 효과음 시스템
+        class SoundManager {
+            constructor() {
+                this.audioContext = null;
+                this.soundEnabled = false;
+                this.initAudio();
+            }
+
+            initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API not supported');
+                }
+            }
+
+            playTone(frequency, duration, type = 'sine') {
+                if (!this.soundEnabled || !this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            playStoneHit() {
+                this.playTone(800, 0.1, 'square');
+                setTimeout(() => this.playTone(600, 0.1, 'square'), 50);
+            }
+
+            playStoneShot() {
+                this.playTone(400, 0.2, 'sawtooth');
+            }
+
+            playVictory() {
+                this.playTone(523, 0.3); // C
+                setTimeout(() => this.playTone(659, 0.3), 300); // E
+                setTimeout(() => this.playTone(784, 0.5), 600); // G
+            }
+
+            playButtonClick() {
+                this.playTone(600, 0.1, 'sine');
+            }
+
+            toggleSound() {
+                this.soundEnabled = !this.soundEnabled;
+                const btn = document.getElementById('sound-btn');
+                if (this.soundEnabled) {
+                    btn.textContent = '🔇 소리 끄기';
+                    this.playButtonClick();
+                } else {
+                    btn.textContent = '🔊 소리 켜기';
+                }
+            }
+        }
+
+        // 게임 인스턴스 생성
+        const game = new AlkkagiGame();
+        const soundManager = new SoundManager();
+        window.soundManager = soundManager; // 전역 접근을 위해 설정
+
+        // 전역 함수들
+        function startGame() {
+            soundManager.playButtonClick();
+            game.startGame();
+        }
+
+        function resetGame() {
+            game.resetGame();
+        }
+
+        function toggleTurn() {
+            game.toggleTurn();
+        }
+
+        function setStoneCount(count) {
+            soundManager.playButtonClick();
+            game.stoneCount = count;
+            game.resetGame();
+        }
+
+        function toggleTurn() {
+            soundManager.playButtonClick();
+            game.toggleTurn();
+        }
+
+        function toggleSound() {
+            soundManager.toggleSound();
+        }
+
+        function toggleFullscreen() {
+            const container = document.getElementById('game-container');
+            container.classList.toggle('fullscreen');
+            
+            const button = document.querySelector('.btn.fullscreen');
+            if (container.classList.contains('fullscreen')) {
+                button.textContent = '일반 화면';
+            } else {
+                button.textContent = '전체 화면';
+            }
+        }
+    </script>
+</body>
+</html> 
